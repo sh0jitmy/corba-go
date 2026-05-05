@@ -1,0 +1,22 @@
+# Binaries
+bin/*
+
+# IDE and OS specific
+.DS_Store
+.idea/
+.vscode/
+
+# Go artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+venv/
+
+# Generated code
+services/naming/*_corba.go
+services/event/*_corba.go
