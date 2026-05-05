@@ -1,0 +1,6 @@
+module Calculator {
+    interface Math {
+        long Add(in long a, in long b);
+        string Echo(in string msg);
+    };
+};

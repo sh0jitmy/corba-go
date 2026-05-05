@@ -1,0 +1,39 @@
+module CosEvent {
+    exception Disconnected {};
+    exception AlreadyConnected {};
+    exception TypeError {};
+
+    interface PushConsumer {
+        void push(in any data) raises(Disconnected);
+        void disconnect_push_consumer();
+    };
+
+    interface PushSupplier {
+        void disconnect_push_supplier();
+    };
+
+    interface ProxyPushConsumer {
+        void connect_push_supplier(in Object push_supplier) raises(AlreadyConnected);
+        void push(in any data);
+        void disconnect_push_consumer();
+    };
+
+    interface ProxyPushSupplier {
+        void connect_push_consumer(in Object push_consumer) raises(AlreadyConnected, TypeError);
+        void disconnect_push_supplier();
+    };
+
+    interface ConsumerAdmin {
+        Object obtain_push_supplier(); 
+    };
+
+    interface SupplierAdmin {
+        Object obtain_push_consumer(); 
+    };
+
+    interface EventChannel {
+        Object for_consumers(); 
+        Object for_suppliers(); 
+        void destroy();
+    };
+};
