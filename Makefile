@@ -1,3 +1,11 @@
+include includes/common.mk
+
+GO_FILES       ?= $(shell find . -name '*.go')
+
+default: all $(DEFAULT_GOALS)
+tools: dev-tools
+
+
 .PHONY: all build clean idlc generate services run-naming run-event install
 
 IDLC_BIN = bin/idlc
