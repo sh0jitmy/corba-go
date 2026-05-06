@@ -1,3 +1,17 @@
+// Copyright 2026- The corba-go Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package giop
 
 import (
@@ -114,7 +128,7 @@ func EncodeRequest(reqID uint32, operation string, targetObjKey []byte, args []b
 	// TargetAddress (Disposition: 0 = KeyAddr)
 	enc.EncodeShort(0)
 	// Object Key length and data
-	enc.EncodeULong(uint32(len(targetObjKey)))
+	enc.EncodeULong(uint32(len(targetObjKey))) //#nosec G115 -- object key length will not exceed uint32 max
 	for _, b := range targetObjKey {
 		enc.EncodeOctet(b)
 	}
@@ -149,7 +163,7 @@ func EncodeRequest(reqID uint32, operation string, targetObjKey []byte, args []b
 		Version:     Version{Major: 1, Minor: 2},
 		Flags:       1, // Little Endian
 		MessageType: RequestMsg,
-		MessageSize: uint32(len(payload)),
+		MessageSize: uint32(len(payload)), //#nosec G115 -- payload length is bounded
 	}
 	WriteHeader(headerEnc, h)
 

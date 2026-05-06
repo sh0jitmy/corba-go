@@ -1,4 +1,8 @@
 # corba-go
+[![Go Reference](https://pkg.go.dev/badge/github.com/shjtmy/corba-go.svg)](https://pkg.go.dev/github.com/shjtmy/corba-go)
+[![Tests](https://github.com/shjtmy/corba-go/workflows/Tests/badge.svg)](https://github.com/shjtmy/corba-go/actions/workflows/tests.yaml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/shjtmy/corba-go)](https://goreportcard.com/report/github.com/shjtmy/corba-go)
+
 
 *Read this in other languages: [日本語 (Japanese)](README_ja.md)*
 
@@ -59,3 +63,7 @@ go run cmd/naming-service/main.go
 # Start Event Service (listens on :2810)
 go run cmd/event-service/main.go
 ```
+
+## License
+This project is published under [Apache 2.0 License](LICENSE).
+

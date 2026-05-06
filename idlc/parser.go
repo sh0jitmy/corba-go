@@ -1,3 +1,17 @@
+// Copyright 2026- The corba-go Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package idlc
 
 import "fmt"
@@ -48,43 +62,44 @@ func (p *Parser) parseModule() (*ModuleNode, error) {
 	}
 
 	for p.cur.Type != TokenRBrace && p.cur.Type != TokenEOF {
-		if p.cur.Type == TokenInterface {
+		switch p.cur.Type {
+		case TokenInterface:
 			iface, err := p.parseInterface()
 			if err != nil {
 				return nil, err
 			}
 			mod.Interfaces = append(mod.Interfaces, iface)
-		} else if p.cur.Type == TokenStruct {
+		case TokenStruct:
 			st, err := p.parseStruct()
 			if err != nil {
 				return nil, err
 			}
 			mod.Structs = append(mod.Structs, st)
-		} else if p.cur.Type == TokenTypedef {
+		case TokenTypedef:
 			td, err := p.parseTypedef()
 			if err != nil {
 				return nil, err
 			}
 			mod.Typedefs = append(mod.Typedefs, td)
-		} else if p.cur.Type == TokenEnum {
+		case TokenEnum:
 			en, err := p.parseEnum()
 			if err != nil {
 				return nil, err
 			}
 			mod.Enums = append(mod.Enums, en)
-		} else if p.cur.Type == TokenUnion {
+		case TokenUnion:
 			un, err := p.parseUnion()
 			if err != nil {
 				return nil, err
 			}
 			mod.Unions = append(mod.Unions, un)
-		} else if p.cur.Type == TokenException {
+		case TokenException:
 			ex, err := p.parseException()
 			if err != nil {
 				return nil, err
 			}
 			mod.Exceptions = append(mod.Exceptions, ex)
-		} else {
+		default:
 			return nil, fmt.Errorf("unexpected token in module: %v", p.cur.Value)
 		}
 	}
@@ -92,7 +107,7 @@ func (p *Parser) parseModule() (*ModuleNode, error) {
 	if err := p.expect(TokenRBrace); err != nil {
 		return nil, err
 	}
-	
+
 	if p.cur.Type == TokenSemi {
 		p.advance()
 	}
@@ -201,13 +216,20 @@ func (p *Parser) parseOperation() (*OperationNode, error) {
 
 	for p.cur.Type != TokenRParen && p.cur.Type != TokenEOF {
 		dir := p.cur.Value
-		if p.cur.Type == TokenIn {
-			p.expect(TokenIn)
-		} else if p.cur.Type == TokenOut {
-			p.expect(TokenOut)
-		} else if p.cur.Type == TokenInout {
-			p.expect(TokenInout)
-		} else {
+		switch p.cur.Type {
+		case TokenIn:
+			if err := p.expect(TokenIn); err != nil {
+				return nil, err
+			}
+		case TokenOut:
+			if err := p.expect(TokenOut); err != nil {
+				return nil, err
+			}
+		case TokenInout:
+			if err := p.expect(TokenInout); err != nil {
+				return nil, err
+			}
+		default:
 			return nil, fmt.Errorf("expected direction (in/out/inout), got %v", p.cur.Value)
 		}
 
@@ -235,7 +257,7 @@ func (p *Parser) parseOperation() (*OperationNode, error) {
 	if err := p.expect(TokenRParen); err != nil {
 		return nil, err
 	}
-	
+
 	// handle optional raises(...)
 	if p.cur.Type == TokenRaises {
 		p.advance()
@@ -262,11 +284,12 @@ func (p *Parser) parseOperation() (*OperationNode, error) {
 }
 
 func (p *Parser) parseType() (string, error) {
-	if p.cur.Type == TokenIdent || p.cur.Type == TokenAny || p.cur.Type == TokenOctet || p.cur.Type == TokenObject || p.cur.Type == TokenVoid {
+	switch p.cur.Type {
+	case TokenIdent, TokenAny, TokenOctet, TokenObject, TokenVoid:
 		t := p.cur.Value
 		p.advance()
 		return t, nil
-	} else if p.cur.Type == TokenSequence {
+	case TokenSequence:
 		p.advance()
 		if err := p.expect(TokenLAngle); err != nil {
 			return "", err
@@ -312,7 +335,7 @@ func (p *Parser) parseEnum() (*EnumNode, error) {
 	if err := p.expect(TokenLBrace); err != nil {
 		return nil, err
 	}
-	
+
 	en := &EnumNode{Name: nameTok.Value}
 	for p.cur.Type != TokenRBrace && p.cur.Type != TokenEOF {
 		valTok := p.cur
@@ -320,7 +343,7 @@ func (p *Parser) parseEnum() (*EnumNode, error) {
 			return nil, err
 		}
 		en.Values = append(en.Values, valTok.Value)
-		
+
 		if p.cur.Type == TokenComma {
 			p.advance()
 		}
@@ -358,14 +381,15 @@ func (p *Parser) parseUnion() (*UnionNode, error) {
 	if err := p.expect(TokenLBrace); err != nil {
 		return nil, err
 	}
-	
+
 	un := &UnionNode{Name: nameTok.Value, SwitchType: switchType}
-	
+
 	for p.cur.Type != TokenRBrace && p.cur.Type != TokenEOF {
 		cNode := &UnionCaseNode{}
-		
+
 		for p.cur.Type == TokenCase || p.cur.Type == TokenDefault {
-			if p.cur.Type == TokenCase {
+			switch p.cur.Type {
+			case TokenCase:
 				p.advance()
 				// Simplified label parsing: treat identifier/number as label string
 				labelTok := p.cur
@@ -374,7 +398,7 @@ func (p *Parser) parseUnion() (*UnionNode, error) {
 				if err := p.expect(TokenColon); err != nil {
 					return nil, err
 				}
-			} else if p.cur.Type == TokenDefault {
+			case TokenDefault:
 				p.advance()
 				cNode.IsDefault = true
 				if err := p.expect(TokenColon); err != nil {
@@ -382,25 +406,25 @@ func (p *Parser) parseUnion() (*UnionNode, error) {
 				}
 			}
 		}
-		
+
 		typ, err := p.parseType()
 		if err != nil {
 			return nil, err
 		}
 		cNode.Type = typ
-		
+
 		fieldTok := p.cur
 		if err := p.expect(TokenIdent); err != nil {
 			return nil, err
 		}
 		cNode.Name = fieldTok.Value
-		
+
 		if err := p.expect(TokenSemi); err != nil {
 			return nil, err
 		}
 		un.Cases = append(un.Cases, cNode)
 	}
-	
+
 	if err := p.expect(TokenRBrace); err != nil {
 		return nil, err
 	}

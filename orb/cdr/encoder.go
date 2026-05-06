@@ -1,3 +1,17 @@
+// Copyright 2026- The corba-go Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cdr
 
 import (
@@ -52,7 +66,7 @@ func (e *Encoder) EncodeOctet(v uint8) {
 func (e *Encoder) EncodeShort(v int16) {
 	e.align(2)
 	b := make([]byte, 2)
-	e.order.PutUint16(b, uint16(v))
+	e.order.PutUint16(b, uint16(v)) //#nosec G115 -- CDR protocol: int16 to uint16 is intentional
 	e.buffer = append(e.buffer, b...)
 }
 
@@ -68,7 +82,7 @@ func (e *Encoder) EncodeUShort(v uint16) {
 func (e *Encoder) EncodeLong(v int32) {
 	e.align(4)
 	b := make([]byte, 4)
-	e.order.PutUint32(b, uint32(v))
+	e.order.PutUint32(b, uint32(v)) //#nosec G115 -- CDR protocol: int32 to uint32 is intentional
 	e.buffer = append(e.buffer, b...)
 }
 
@@ -84,7 +98,7 @@ func (e *Encoder) EncodeULong(v uint32) {
 func (e *Encoder) EncodeLongLong(v int64) {
 	e.align(8)
 	b := make([]byte, 8)
-	e.order.PutUint64(b, uint64(v))
+	e.order.PutUint64(b, uint64(v)) //#nosec G115 -- CDR protocol: int64 to uint64 is intentional
 	e.buffer = append(e.buffer, b...)
 }
 
@@ -120,9 +134,9 @@ func (e *Encoder) EncodeBoolean(v bool) {
 // followed by the string characters and a null terminator.
 func (e *Encoder) EncodeString(v string) {
 	// Length includes the null terminator
-	length := uint32(len(v) + 1)
+	length := uint32(len(v) + 1) //#nosec G115 -- string length will not exceed uint32 max
 	e.EncodeULong(length)
-	
+
 	e.buffer = append(e.buffer, []byte(v)...)
 	e.buffer = append(e.buffer, 0) // null terminator
 }

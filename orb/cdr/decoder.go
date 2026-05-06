@@ -1,3 +1,17 @@
+// Copyright 2026- The corba-go Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cdr
 
 import (
@@ -62,7 +76,7 @@ func (d *Decoder) DecodeShort() (int16, error) {
 	}
 	v := d.order.Uint16(d.buffer[d.offset : d.offset+2])
 	d.offset += 2
-	return int16(v), nil
+	return int16(v), nil //#nosec G115 -- CDR protocol: uint16 to int16 is intentional
 }
 
 // DecodeUShort decodes an unsigned 16-bit integer (uint16).
@@ -88,7 +102,7 @@ func (d *Decoder) DecodeLong() (int32, error) {
 	}
 	v := d.order.Uint32(d.buffer[d.offset : d.offset+4])
 	d.offset += 4
-	return int32(v), nil
+	return int32(v), nil //#nosec G115 -- CDR protocol: uint32 to int32 is intentional
 }
 
 // DecodeULong decodes an unsigned 32-bit integer (uint32).
@@ -114,7 +128,7 @@ func (d *Decoder) DecodeLongLong() (int64, error) {
 	}
 	v := d.order.Uint64(d.buffer[d.offset : d.offset+8])
 	d.offset += 8
-	return int64(v), nil
+	return int64(v), nil //#nosec G115 -- CDR protocol: uint64 to int64 is intentional
 }
 
 // DecodeULongLong decodes an unsigned 64-bit integer (uint64).
@@ -166,15 +180,15 @@ func (d *Decoder) DecodeString() (string, error) {
 	if length == 0 {
 		return "", nil // should at least have null terminator, but handle gracefully
 	}
-	
-	if uint32(d.offset)+length > uint32(len(d.buffer)) {
+
+	if uint32(d.offset)+length > uint32(len(d.buffer)) { //#nosec G115 -- offset and buffer length are always non-negative
 		return "", errors.New("cdr decoder: out of bounds for string")
 	}
-	
+
 	// length includes the null terminator
-	strData := d.buffer[d.offset : uint32(d.offset)+length-1]
+	strData := d.buffer[d.offset : uint32(d.offset)+length-1] //#nosec G115 -- offset is always non-negative
 	d.offset += int(length)
-	
+
 	return string(strData), nil
 }
 
@@ -185,4 +199,3 @@ func (d *Decoder) Rest() []byte {
 	}
 	return d.buffer[d.offset:]
 }
-

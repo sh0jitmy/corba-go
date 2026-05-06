@@ -1,9 +1,24 @@
+// Copyright 2026- The corba-go Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package iiop
 
 import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -25,7 +40,11 @@ func TestClientServer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to split addr: %v", err)
 	}
-	fmt.Sscanf(portStr, "%d", &port)
+	portVal, err := strconv.ParseUint(portStr, 10, 16)
+	if err != nil {
+		t.Fatalf("Failed to parse port: %v", err)
+	}
+	port = uint16(portVal)
 
 	go func() {
 		err := server.Serve(func(objectKey []byte, operation string, reqPayload []byte) ([]byte, error) {
@@ -64,8 +83,8 @@ func TestClientServer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
-	defer client.Close()
-	defer server.Close()
+	defer func() { _ = client.Close() }()
+	defer func() { _ = server.Close() }()
 
 	// Encode request payload
 	enc := cdr.NewEncoder(binary.LittleEndian)

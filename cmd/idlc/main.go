@@ -1,9 +1,22 @@
+// Copyright 2026- The corba-go Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package main
 
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -19,8 +32,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	idlFile := flag.Arg(0)
-	data, err := ioutil.ReadFile(idlFile)
+	idlFile := filepath.Clean(flag.Arg(0))
+	data, err := os.ReadFile(idlFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading file: %v\n", err)
 		os.Exit(1)
@@ -39,9 +52,9 @@ func main() {
 
 	base := filepath.Base(idlFile)
 	name := stringsTrimSuffix(base, filepath.Ext(base))
-	outFile := name + "_corba.go"
+	outFile := filepath.Clean(name + "_corba.go")
 
-	err = ioutil.WriteFile(outFile, []byte(code), 0644)
+	err = os.WriteFile(outFile, []byte(code), 0600) //nolint:gosec
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error writing generated code: %v\n", err)
 		os.Exit(1)
