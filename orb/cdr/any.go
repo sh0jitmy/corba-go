@@ -1,3 +1,17 @@
+// Copyright 2026- The corba-go Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cdr
 
 import (
@@ -8,14 +22,14 @@ import (
 type TCKind uint32
 
 const (
-	tk_null   TCKind = 0
-	tk_void   TCKind = 1
-	tk_short  TCKind = 2
-	tk_long   TCKind = 3
-	tk_ushort TCKind = 4
-	tk_ulong  TCKind = 5
-	tk_float  TCKind = 6
-	tk_double TCKind = 7
+	tk_null    TCKind = 0
+	tk_void    TCKind = 1
+	tk_short   TCKind = 2
+	tk_long    TCKind = 3
+	tk_ushort  TCKind = 4
+	tk_ulong   TCKind = 5
+	tk_float   TCKind = 6
+	tk_double  TCKind = 7
 	tk_boolean TCKind = 8
 	tk_char    TCKind = 9
 	tk_octet   TCKind = 10

@@ -1,3 +1,17 @@
+// Copyright 2026- The corba-go Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cdr
 
 import (
@@ -86,13 +100,13 @@ func TestEncodeDecode(t *testing.T) {
 func TestBaseOffsetAlignment(t *testing.T) {
 	enc := NewEncoder(binary.LittleEndian)
 	enc.SetBaseOffset(3) // Suppose there are 3 bytes before this buffer
-	
+
 	enc.EncodeOctet(1)
 	// Current buffer len: 1. Absolute offset: 3 + 1 = 4.
 	// Encoding a Long (4 bytes) requires 4-byte alignment.
 	// Since absolute offset is 4, it is already aligned! No padding should be added.
 	enc.EncodeLong(12345)
-	
+
 	data := enc.Bytes()
 	if len(data) != 5 { // 1 byte octet + 0 padding + 4 bytes long
 		t.Errorf("Expected length 5, got %d", len(data))
@@ -100,15 +114,14 @@ func TestBaseOffsetAlignment(t *testing.T) {
 
 	dec := NewDecoder(data, binary.LittleEndian)
 	dec.SetBaseOffset(3)
-	
+
 	vOctet, _ := dec.DecodeOctet()
 	if vOctet != 1 {
 		t.Errorf("Expected octet 1, got %d", vOctet)
 	}
-	
+
 	vLong, err := dec.DecodeLong()
 	if err != nil || vLong != 12345 {
 		t.Errorf("Long failed: %v, %v", vLong, err)
 	}
 }
-

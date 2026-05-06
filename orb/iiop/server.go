@@ -1,3 +1,17 @@
+// Copyright 2026- The corba-go Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package iiop
 
 import (
@@ -54,7 +68,7 @@ func (s *Server) Addr() net.Addr {
 }
 
 func (s *Server) handleConnection(conn net.Conn, handler Handler) {
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	for {
 		// Read GIOP Header
@@ -76,7 +90,10 @@ func (s *Server) handleConnection(conn net.Conn, handler Handler) {
 		if header.MessageType == giop.LocateRequestMsg {
 			// Handle LocateRequest
 			bodyBuf := make([]byte, header.MessageSize)
-			io.ReadFull(conn, bodyBuf)
+			if _, err := io.ReadFull(conn, bodyBuf); err != nil {
+				log.Printf("Error reading LocateRequest body: %v", err)
+				return
+			}
 
 			var order binary.ByteOrder
 			if header.Flags&0x01 == 1 {
@@ -98,10 +115,13 @@ func (s *Server) handleConnection(conn net.Conn, handler Handler) {
 				Version:     header.Version,
 				Flags:       1,
 				MessageType: giop.LocateReplyMsg,
-				MessageSize: uint32(len(enc.Bytes())),
+				MessageSize: uint32(len(enc.Bytes())), //#nosec G115 -- encoder output is bounded
 			})
 
-			conn.Write(append(hEnc.Bytes(), enc.Bytes()...))
+			if _, err := conn.Write(append(hEnc.Bytes(), enc.Bytes()...)); err != nil {
+				log.Printf("Error writing LocateReply: %v", err)
+				return
+			}
 			continue // keep connection open
 		} else if header.MessageType != giop.RequestMsg {
 			log.Printf("Unsupported message type: %v", header.MessageType)
@@ -206,13 +226,16 @@ func (s *Server) handleConnection(conn net.Conn, handler Handler) {
 				Version:     giop.Version{Major: 1, Minor: 2},
 				Flags:       1,
 				MessageType: giop.ReplyMsg,
-				MessageSize: uint32(len(b)),
+				MessageSize: uint32(len(b)), //#nosec G115 -- reply payload is bounded
 			})
 
 			replyMsg := append(hEnc.Bytes(), b...)
 
 			// Send reply
-			conn.Write(replyMsg)
+			if _, err := conn.Write(replyMsg); err != nil {
+				log.Printf("Error writing reply: %v", err)
+				return
+			}
 		}
 	}
 }
