@@ -17,6 +17,3 @@ bin/*
 vendor/
 venv/
 
-# Generated code
-services/naming/*_corba.go
-services/event/*_corba.go

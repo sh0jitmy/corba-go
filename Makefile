@@ -14,7 +14,7 @@ EVENT_BIN = bin/event-service
 
 all: build
 
-build: idlc generate services
+build: idlc services
 
 idlc:
 	@echo "Building IDL compiler..."
