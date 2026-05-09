@@ -18,7 +18,7 @@ import (
 	"encoding/binary"
 	"errors"
 
-	"github.com/shjtmy/corba-go/orb/cdr"
+	"github.com/sh0jitmy/corba-go/orb/cdr"
 )
 
 // MsgType represents the GIOP message type.

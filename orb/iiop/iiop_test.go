@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shjtmy/corba-go/orb/cdr"
+	"github.com/sh0jitmy/corba-go/orb/cdr"
 )
 
 func TestClientServer(t *testing.T) {

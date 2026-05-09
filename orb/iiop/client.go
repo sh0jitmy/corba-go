@@ -22,8 +22,8 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/shjtmy/corba-go/orb/cdr"
-	"github.com/shjtmy/corba-go/orb/giop"
+	"github.com/sh0jitmy/corba-go/orb/cdr"
+	"github.com/sh0jitmy/corba-go/orb/giop"
 )
 
 // Client represents an IIOP connection to a specific host:port.

@@ -17,9 +17,10 @@ package iop
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"strings"
 	"testing"
 
-	"github.com/shjtmy/corba-go/orb/cdr"
+	"github.com/sh0jitmy/corba-go/orb/cdr"
 )
 
 func buildMockIOR() string {
@@ -95,5 +96,52 @@ func TestParseIOR(t *testing.T) {
 
 	if string(iiopProf.ObjectKey) != "test" {
 		t.Errorf("Expected ObjectKey 'test', got '%s'", string(iiopProf.ObjectKey))
+	}
+}
+
+func TestStringifyIOR(t *testing.T) {
+	// Build IOR using the new API
+	ior := NewIOR("IDL:Calculator/Math:1.0", "localhost", 2809, []byte("Test"))
+	iorStr := ior.StringifyIOR()
+
+	// Verify it starts with "IOR:"
+	if !strings.HasPrefix(iorStr, "IOR:") {
+		t.Fatalf("Expected IOR string to start with 'IOR:', got '%s'", iorStr[:10])
+	}
+
+	// Parse it back
+	parsed, err := ParseIOR(iorStr)
+	if err != nil {
+		t.Fatalf("ParseIOR failed on StringifyIOR output: %v", err)
+	}
+
+	if parsed.TypeID != "IDL:Calculator/Math:1.0" {
+		t.Errorf("Expected TypeID 'IDL:Calculator/Math:1.0', got '%s'", parsed.TypeID)
+	}
+
+	if len(parsed.Profiles) != 1 {
+		t.Fatalf("Expected 1 profile, got %d", len(parsed.Profiles))
+	}
+
+	prof := parsed.Profiles[0]
+	if prof.Tag != TAG_INTERNET_IOP {
+		t.Errorf("Expected tag %d, got %d", TAG_INTERNET_IOP, prof.Tag)
+	}
+
+	iiopProf, err := ParseIIOPProfile(prof.ProfileData)
+	if err != nil {
+		t.Fatalf("ParseIIOPProfile failed: %v", err)
+	}
+
+	if iiopProf.Host != "localhost" {
+		t.Errorf("Expected host 'localhost', got '%s'", iiopProf.Host)
+	}
+
+	if iiopProf.Port != 2809 {
+		t.Errorf("Expected port 2809, got %d", iiopProf.Port)
+	}
+
+	if string(iiopProf.ObjectKey) != "Test" {
+		t.Errorf("Expected ObjectKey 'Test', got '%s'", string(iiopProf.ObjectKey))
 	}
 }

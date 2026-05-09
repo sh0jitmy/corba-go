@@ -35,8 +35,8 @@ services:
 clean:
 	@echo "Cleaning binaries and generated code..."
 	rm -rf bin/
-	rm -f services/naming/*_corba.go
-	rm -f services/event/*_corba.go
+	rm -f services/naming/*_types.go services/naming/*_stub.go services/naming/*_skel.go
+	rm -f services/event/*_types.go services/event/*_stub.go services/event/*_skel.go
 
 run-naming:
 	@echo "Starting Naming Service..."

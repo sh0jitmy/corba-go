@@ -19,61 +19,28 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/shjtmy/corba-go/orb/cdr"
-	"github.com/shjtmy/corba-go/orb/iiop"
+	"github.com/sh0jitmy/corba-go/orb/cdr"
+	"github.com/sh0jitmy/corba-go/orb/iiop"
 )
-
-type Calculator_Math interface {
-	Add(a int32, b int32) (int32, error)
-	Echo(msg string) (string, error)
-}
-
-type Calculator_Math_Stub struct {
-	client    *iiop.Client
-	objectKey []byte
-}
-
-func NewCalculator_Math_Stub(client *iiop.Client, objectKey []byte) Calculator_Math {
-	return &Calculator_Math_Stub{client: client, objectKey: objectKey}
-}
-
-func (s *Calculator_Math_Stub) Add(a int32, b int32) (int32, error) {
-	enc := cdr.NewEncoder(binary.LittleEndian)
-	enc.EncodeLong(a)
-	enc.EncodeLong(b)
-	reply, err := s.client.Invoke(s.objectKey, "Add", enc.Bytes())
-	if err != nil {
-		var zero int32
-		return zero, err
-	}
-
-	dec := cdr.NewDecoder(reply, binary.LittleEndian)
-	ret, err := dec.DecodeLong()
-	return ret, err
-}
-
-func (s *Calculator_Math_Stub) Echo(msg string) (string, error) {
-	enc := cdr.NewEncoder(binary.LittleEndian)
-	enc.EncodeString(msg)
-	reply, err := s.client.Invoke(s.objectKey, "Echo", enc.Bytes())
-	if err != nil {
-		var zero string
-		return zero, err
-	}
-
-	dec := cdr.NewDecoder(reply, binary.LittleEndian)
-	ret, err := dec.DecodeString()
-	return ret, err
-}
 
 func Calculator_Math_Skeleton(impl Calculator_Math) iiop.Handler {
 	return func(objectKey []byte, operation string, reqPayload []byte) ([]byte, error) {
 		dec := cdr.NewDecoder(reqPayload, binary.LittleEndian)
+		var err error
+		_ = err
+		_ = dec
 		switch operation {
 		case "Add":
-			arg_a, _ := dec.DecodeLong()
-			arg_b, _ := dec.DecodeLong()
+			_tmp_arg_a, err := dec.DecodeLong()
+			arg_a := int32(_tmp_arg_a)
+			_ = err
+			_ = dec
+			_tmp_arg_b, err := dec.DecodeLong()
+			arg_b := int32(_tmp_arg_b)
+			_ = err
+			_ = dec
 			ret, err := impl.Add(arg_a, arg_b)
+			_ = ret
 			if err != nil {
 				return nil, err
 			}
@@ -81,8 +48,12 @@ func Calculator_Math_Skeleton(impl Calculator_Math) iiop.Handler {
 			enc.EncodeLong(ret)
 			return enc.Bytes(), nil
 		case "Echo":
-			arg_msg, _ := dec.DecodeString()
+			_tmp_arg_msg, err := dec.DecodeString()
+			arg_msg := string(_tmp_arg_msg)
+			_ = err
+			_ = dec
 			ret, err := impl.Echo(arg_msg)
+			_ = ret
 			if err != nil {
 				return nil, err
 			}

@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/shjtmy/corba-go/orb/cdr"
+	"github.com/sh0jitmy/corba-go/orb/cdr"
 )
 
 const (
@@ -185,4 +185,65 @@ func ParseIIOPProfile(data []byte) (*IIOPProfile, error) {
 		Port:         port,
 		ObjectKey:    objKey,
 	}, nil
+}
+
+// NewIIOPProfile creates a new IIOPProfile with the given parameters.
+func NewIIOPProfile(host string, port uint16, objectKey []byte) *IIOPProfile {
+	return &IIOPProfile{
+		VersionMajor: 1,
+		VersionMinor: 2,
+		Host:         host,
+		Port:         port,
+		ObjectKey:    objectKey,
+	}
+}
+
+// Encode serializes the IIOP profile into a CDR encapsulation byte slice
+// (including the leading byte-order flag).
+func (p *IIOPProfile) Encode() []byte {
+	enc := cdr.NewEncoder(binary.LittleEndian)
+	enc.EncodeOctet(p.VersionMajor)
+	enc.EncodeOctet(p.VersionMinor)
+	enc.EncodeString(p.Host)
+	enc.EncodeUShort(p.Port)
+	enc.EncodeULong(uint32(len(p.ObjectKey))) //#nosec G115 -- object key length is always small
+	for _, b := range p.ObjectKey {
+		enc.EncodeOctet(b)
+	}
+	enc.EncodeULong(0) // 0 TaggedComponents
+
+	// Wrap as CDR encapsulation: byte-order flag (1 = LittleEndian) + encoded data
+	return append([]byte{1}, enc.Bytes()...)
+}
+
+// NewIOR creates a new IOR with a single IIOP profile.
+func NewIOR(typeID string, host string, port uint16, objectKey []byte) *IOR {
+	prof := NewIIOPProfile(host, port, objectKey)
+	return &IOR{
+		TypeID: typeID,
+		Profiles: []TaggedProfile{
+			{
+				Tag:         TAG_INTERNET_IOP,
+				ProfileData: prof.Encode(),
+			},
+		},
+	}
+}
+
+// StringifyIOR encodes the IOR into the standard "IOR:..." stringified format.
+func (ior *IOR) StringifyIOR() string {
+	enc := cdr.NewEncoder(binary.LittleEndian)
+	enc.EncodeString(ior.TypeID)
+	enc.EncodeULong(uint32(len(ior.Profiles))) //#nosec G115 -- profile count is always small
+	for _, p := range ior.Profiles {
+		enc.EncodeULong(p.Tag)
+		enc.EncodeULong(uint32(len(p.ProfileData))) //#nosec G115 -- profile data is bounded
+		for _, b := range p.ProfileData {
+			enc.EncodeOctet(b)
+		}
+	}
+
+	// Wrap as CDR encapsulation: byte-order flag (1 = LittleEndian) + encoded data
+	iorBytes := append([]byte{1}, enc.Bytes()...)
+	return "IOR:" + hex.EncodeToString(iorBytes)
 }
