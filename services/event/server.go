@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/shjtmy/corba-go/orb/cdr"
+	"github.com/sh0jitmy/corba-go/orb/cdr"
 )
 
 type EventChannelImpl struct {

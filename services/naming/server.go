@@ -40,6 +40,7 @@ func nameToString(n CosNaming_Name) string {
 }
 
 func (n *NamingContextImpl) Bind(name CosNaming_Name, obj string) error {
+	fmt.Printf("NamingService: Binding '%v' to '%s'\n", name, obj)
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	strName := nameToString(name)
