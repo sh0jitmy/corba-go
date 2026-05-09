@@ -15,14 +15,11 @@
 package main
 
 import (
-	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"log"
 
-	"github.com/shjtmy/corba-go/orb/cdr"
-	"github.com/shjtmy/corba-go/orb/iiop"
-	"github.com/shjtmy/corba-go/orb/iop"
+	"github.com/sh0jitmy/corba-go/orb/iiop"
+	"github.com/sh0jitmy/corba-go/orb/iop"
 )
 
 type MathImpl struct{}
@@ -46,34 +43,9 @@ func main() {
 	impl := &MathImpl{}
 	handler := Calculator_Math_Skeleton(impl)
 
-	// Create a dummy stringified IOR
-	profEnc := cdr.NewEncoder(binary.LittleEndian)
-	profEnc.EncodeOctet(1) // byte order (little endian)
-	profEnc.EncodeOctet(1) // Major (1)
-	profEnc.EncodeOctet(2) // Minor (2)
-	profEnc.EncodeString("host.docker.internal")
-	profEnc.EncodeUShort(2809)
-	profEnc.EncodeULong(4) // object key length
-	profEnc.EncodeOctet('T')
-	profEnc.EncodeOctet('e')
-	profEnc.EncodeOctet('s')
-	profEnc.EncodeOctet('t')
-	profEnc.EncodeULong(0) // sequence of TaggedComponent length (0 components)
-
-	profData := profEnc.Bytes()
-
-	iorEnc := cdr.NewEncoder(binary.LittleEndian)
-	iorEnc.EncodeOctet(1) // byte order (little endian)
-	iorEnc.EncodeString("IDL:Calculator/Math:1.0")
-	iorEnc.EncodeULong(1) // 1 profile
-	iorEnc.EncodeULong(iop.TAG_INTERNET_IOP)
-	iorEnc.EncodeULong(uint32(len(profData))) //#nosec G115 -- profData length is always small
-	for _, b := range profData {
-		iorEnc.EncodeOctet(b)
-	}
-
-	iorBytes := iorEnc.Bytes()
-	iorStr := "IOR:" + hex.EncodeToString(iorBytes)
+	// Create a stringified IOR using the shared utility
+	ior := iop.NewIOR("IDL:Calculator/Math:1.0", "host.docker.internal", 2809, []byte("Test"))
+	iorStr := ior.StringifyIOR()
 
 	fmt.Println("Server started on :2809")
 	fmt.Println("IOR:")
