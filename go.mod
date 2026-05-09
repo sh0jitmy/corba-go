@@ -1,4 +1,4 @@
-module github.com/shjtmy/corba-go
+module github.com/sh0jitmy/corba-go
 
 go 1.26.2
 
