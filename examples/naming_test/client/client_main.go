@@ -41,27 +41,23 @@ func main() {
 	// Resolve the name to get an IOR string
 	iorStr, err := namingContext.Resolve(name)
 	if err != nil {
-		fmt.Printf("Error resolving name: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 	fmt.Printf("Resolved IOR: %s\n", iorStr)
 
 	// Parse the IOR string to extract host, port, and object key
 	ior, err := iop.ParseIOR(iorStr)
 	if err != nil {
-		fmt.Printf("Error parsing IOR: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	if len(ior.Profiles) == 0 {
-		fmt.Println("Error: no profiles in IOR")
-		os.Exit(1)
+		panic("Error: no profiles in IOR")
 	}
 
 	prof, err := iop.ParseIIOPProfile(ior.Profiles[0].ProfileData)
 	if err != nil {
-		fmt.Printf("Error parsing IIOP profile: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	fmt.Printf("Connecting to %s:%d, objectKey=%s\n", prof.Host, prof.Port, string(prof.ObjectKey))
@@ -69,8 +65,7 @@ func main() {
 	// Connect to the target server using the resolved IOR
 	mathClient, err := iiop.NewClient(prof.Host, prof.Port)
 	if err != nil {
-		fmt.Printf("Error connecting to server: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 	defer func() { _ = mathClient.Close() }()
 
@@ -78,8 +73,7 @@ func main() {
 
 	ret, err := calculator.Add(int32(1), int32(2))
 	if err != nil {
-		fmt.Printf("Error adding: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 	fmt.Printf("1 + 2 = %d\n", ret)
 }

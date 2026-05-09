@@ -16,8 +16,6 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"os"
 
 	"github.com/sh0jitmy/corba-go/orb/iiop"
 	"github.com/sh0jitmy/corba-go/orb/iop"
@@ -40,7 +38,7 @@ func main() {
 	portNumber := uint16(42809)
 	server, err := iiop.NewServer(portNumber)
 	if err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		panic(err)
 	}
 
 	impl := &MathImpl{}
@@ -54,13 +52,12 @@ func main() {
 	fmt.Println("IOR:")
 	fmt.Println(iorStr)
 
-	//naming service
+	// naming service
 	client, err := iiop.NewClient("localhost", 2809)
 	if err != nil {
-		fmt.Printf("Error creating client: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	namingContext := naming.NewCosNaming_NamingContext_Stub(client, []byte("NameService"))
 
@@ -70,8 +67,7 @@ func main() {
 
 	err = namingContext.Bind(name, iorStr)
 	if err != nil {
-		fmt.Printf("Error binding name: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	err = server.Serve(func(objectKey []byte, operation string, reqPayload []byte) ([]byte, error) {
@@ -82,6 +78,6 @@ func main() {
 		return handler(objectKey, operation, reqPayload)
 	})
 	if err != nil {
-		log.Fatalf("Server error: %v", err)
+		panic(err)
 	}
 }

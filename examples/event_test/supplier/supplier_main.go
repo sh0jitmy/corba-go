@@ -41,8 +41,7 @@ func main() {
 	// 2. Get SupplierAdmin from EventChannel
 	supplierAdminKey, err := eventChannel.For_suppliers()
 	if err != nil {
-		fmt.Printf("Error getting SupplierAdmin: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 	fmt.Printf("Got SupplierAdmin: %s\n", supplierAdminKey)
 
@@ -51,8 +50,7 @@ func main() {
 	// 3. Obtain a ProxyPushConsumer from SupplierAdmin
 	proxyPushConsumerKey, err := supplierAdmin.Obtain_push_consumer()
 	if err != nil {
-		fmt.Printf("Error obtaining ProxyPushConsumer: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 	fmt.Printf("Got ProxyPushConsumer: %s\n", proxyPushConsumerKey)
 
@@ -61,8 +59,7 @@ func main() {
 	// 4. Connect this supplier to the ProxyPushConsumer
 	err = proxyPushConsumer.Connect_push_supplier("my_supplier")
 	if err != nil {
-		fmt.Printf("Error connecting push supplier: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 	fmt.Println("Supplier connected successfully")
 
@@ -80,8 +77,7 @@ func main() {
 		}
 		err = proxyPushConsumer.Push(data)
 		if err != nil {
-			fmt.Printf("Error pushing event %d: %v\n", i+1, err)
-			os.Exit(1)
+			panic(err)
 		}
 		fmt.Printf("Pushed event %d: %s\n", i+1, msg)
 		time.Sleep(500 * time.Millisecond)
@@ -90,8 +86,7 @@ func main() {
 	// 6. Disconnect
 	err = proxyPushConsumer.Disconnect_push_consumer()
 	if err != nil {
-		fmt.Printf("Error disconnecting: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 	fmt.Println("Supplier disconnected. Done.")
 }

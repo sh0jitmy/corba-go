@@ -18,7 +18,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/sh0jitmy/corba-go/orb/iiop"
 	"github.com/sh0jitmy/corba-go/services/event"
@@ -28,8 +27,7 @@ func main() {
 	// Connect to the Event Service
 	client, err := iiop.NewClient("localhost", 2810)
 	if err != nil {
-		fmt.Printf("Error connecting to EventService: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 	defer func() { _ = client.Close() }()
 
@@ -39,8 +37,7 @@ func main() {
 	// 2. Get ConsumerAdmin from EventChannel
 	consumerAdminKey, err := eventChannel.For_consumers()
 	if err != nil {
-		fmt.Printf("Error getting ConsumerAdmin: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 	fmt.Printf("Got ConsumerAdmin: %s\n", consumerAdminKey)
 
@@ -49,8 +46,7 @@ func main() {
 	// 3. Obtain a ProxyPushSupplier from ConsumerAdmin
 	proxyPushSupplierKey, err := consumerAdmin.Obtain_push_supplier()
 	if err != nil {
-		fmt.Printf("Error obtaining ProxyPushSupplier: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 	fmt.Printf("Got ProxyPushSupplier: %s\n", proxyPushSupplierKey)
 
@@ -59,8 +55,7 @@ func main() {
 	// 4. Connect this consumer to the ProxyPushSupplier
 	err = proxyPushSupplier.Connect_push_consumer("my_consumer")
 	if err != nil {
-		fmt.Printf("Error connecting push consumer: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 	fmt.Println("Consumer registered successfully")
 	fmt.Println("Consumer is now connected. Events pushed by suppliers will be broadcast to this consumer.")
@@ -68,8 +63,7 @@ func main() {
 	// 5. Disconnect when done
 	err = proxyPushSupplier.Disconnect_push_supplier()
 	if err != nil {
-		fmt.Printf("Error disconnecting: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 	fmt.Println("Consumer disconnected. Done.")
 }
