@@ -17,8 +17,8 @@ package main
 import (
 	"log"
 
-	"github.com/shjtmy/corba-go/orb/iiop"
-	"github.com/shjtmy/corba-go/services/naming"
+	"github.com/sh0jitmy/corba-go/orb/iiop"
+	"github.com/sh0jitmy/corba-go/services/naming"
 )
 
 func main() {
