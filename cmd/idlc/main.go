@@ -19,16 +19,18 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/shjtmy/corba-go/idlc"
+	"github.com/sh0jitmy/corba-go/idlc"
 )
 
 func main() {
-	pkgName := flag.String("pkg", "main", "Go package name for generated code")
+	pkgName := flag.String("pkg", "", "Go package name for generated code (default: lowercase IDL module name)")
+	outDir := flag.String("out", ".", "Output directory for generated files")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
-		fmt.Println("Usage: idlc [-pkg <pkgname>] <file.idl>")
+		fmt.Println("Usage: idlc [-pkg <pkgname>] [-out <dir>] <file.idl>")
 		os.Exit(1)
 	}
 
@@ -48,24 +50,32 @@ func main() {
 		os.Exit(1)
 	}
 
-	code := idlc.GenerateGoCode(mod, *pkgName)
+	// Derive package name from module name if not specified
+	pkg := *pkgName
+	if pkg == "" {
+		pkg = strings.ToLower(mod.Name)
+	}
 
 	base := filepath.Base(idlFile)
-	name := stringsTrimSuffix(base, filepath.Ext(base))
-	outFile := filepath.Clean(name + "_corba.go")
+	name := strings.TrimSuffix(base, filepath.Ext(base))
+	cleanOut := filepath.Clean(*outDir)
 
-	err = os.WriteFile(outFile, []byte(code), 0600) //nolint:gosec
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing generated code: %v\n", err)
-		os.Exit(1)
+	// Generate and write each file
+	files := []struct {
+		suffix  string
+		content string
+	}{
+		{"_types.go", idlc.GenerateTypes(mod, pkg)},
+		{"_stub.go", idlc.GenerateStub(mod, pkg)},
+		{"_skel.go", idlc.GenerateSkel(mod, pkg)},
 	}
 
-	fmt.Printf("Generated %s\n", outFile)
-}
-
-func stringsTrimSuffix(s, suffix string) string {
-	if len(s) >= len(suffix) && s[len(s)-len(suffix):] == suffix {
-		return s[:len(s)-len(suffix)]
+	for _, f := range files {
+		outFile := filepath.Clean(filepath.Join(cleanOut, name+f.suffix))
+		if err := os.WriteFile(outFile, []byte(f.content), 0600); err != nil {
+			fmt.Fprintf(os.Stderr, "Error writing %s: %v\n", outFile, err)
+			os.Exit(1)
+		}
+		fmt.Printf("Generated %s\n", outFile)
 	}
-	return s
 }
