@@ -1,7 +1,7 @@
 # corba-go
-[![Go Reference](https://pkg.go.dev/badge/github.com/shjtmy/corba-go.svg)](https://pkg.go.dev/github.com/shjtmy/corba-go)
-[![Tests](https://github.com/shjtmy/corba-go/workflows/Tests/badge.svg)](https://github.com/shjtmy/corba-go/actions/workflows/tests.yaml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/shjtmy/corba-go)](https://goreportcard.com/report/github.com/shjtmy/corba-go)
+[![Go Reference](https://pkg.go.dev/badge/github.com/sh0jitmy/corba-go.svg)](https://pkg.go.dev/github.com/sh0jitmy/corba-go)
+[![Tests](https://github.com/sh0jitmy/corba-go/workflows/Tests/badge.svg)](https://github.com/sh0jitmy/corba-go/actions/workflows/tests.yaml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/sh0jitmy/corba-go)](https://goreportcard.com/report/github.com/sh0jitmy/corba-go)
 
 
 *Read this in other languages: [日本語 (Japanese)](README_ja.md)*
@@ -10,31 +10,51 @@ A Native Go implementation of CORBA middleware. This project provides a basic bu
 
 ## Features
 - **IDL Compiler (`idlc`)**: Compiles OMG IDL into Go interfaces, client stubs, and server skeletons.
-  - Supported IDL types: `struct`, `exception`, `typedef`, `sequence`, `enum`, `union`, basic types (`long`, `short`, `octet`, `string`, `boolean`, etc.), and `Object`.
+  - Supported IDL types: `struct`, `exception`, `typedef`, `sequence`, `enum`, `union`, basic types (`long`, `short`, `octet`, `string`, `boolean`, etc.), `Object`, and `any`.
+  - Generated code is split into three files: `*_types.go` (type definitions), `*_stub.go` (client stubs), `*_skel.go` (server skeletons).
 - **ORB Core**: 
   - CDR (Common Data Representation) marshaling/unmarshaling with strict memory alignment handling.
   - GIOP 1.2 & IIOP (Internet Inter-ORB Protocol) support.
+  - IOR (Interoperable Object Reference) encoding/decoding utilities.
 - **Naming Service (`CosNaming`)**: In-memory name-to-IOR binding and resolution.
-- **Event Service (`CosEvent`)**: Simple push-model event channel for broadcasting messages.
+- **Event Service (`CosEvent`)**: Push-model event channel for broadcasting messages between suppliers and consumers.
 
 ## Directory Structure
-- `cmd/`: Command-line entry points.
-  - `idlc/`: The IDL compiler.
-  - `naming-service/`: The standalone CosNaming service.
-  - `event-service/`: The standalone CosEvent service.
-- `orb/`: Core ORB protocols (`cdr`, `giop`, `iiop`, `iop`).
-- `services/`: Implementations of standard CORBA services (`naming`, `event`).
-- `idlc/`: Parser, AST, and Go code generator packages for the IDL compiler.
+
+```
+corba-go/
+├── cmd/                          # Command-line entry points
+│   ├── idlc/                     # IDL compiler
+│   ├── naming-service/           # Standalone CosNaming service
+│   └── event-service/            # Standalone CosEvent service
+├── orb/                          # Core ORB protocols
+│   ├── cdr/                      # CDR encoder/decoder + Any type
+│   ├── giop/                     # GIOP message handling
+│   ├── iiop/                     # IIOP client/server
+│   └── iop/                      # IOR encoding/decoding
+├── idlc/                         # IDL compiler internals (lexer, parser, AST, generator)
+├── services/                     # Standard CORBA service implementations
+│   ├── naming/                   # CosNaming (IDL + server + generated code)
+│   └── event/                    # CosEvent (IDL + server + generated code)
+└── examples/                     # Usage examples
+    ├── basic_test/               # Basic IIOP client/server
+    ├── naming_test/              # Naming service integration test
+    │   └── client/               # Naming client (resolve + invoke)
+    └── event_test/               # Event service integration test
+        ├── supplier/             # Push supplier
+        └── consumer/             # Push consumer
+```
 
 ## Quick Start (Makefile)
-
-We provide a `Makefile` to simplify building and running the project.
 
 ```bash
 # Build the IDL compiler (idlc) and all services
 make build
 
-# Clean generated binaries and stubs
+# Generate Go code from service IDL files
+make generate
+
+# Clean generated binaries and code
 make clean
 
 # Run the Naming Service
@@ -47,15 +67,26 @@ make run-event
 ## Manual Usage
 
 ### 1. Compiling IDL
+
+The `idlc` compiler generates three separate files from each IDL definition:
+
 ```bash
 # Build the compiler
-go build -o bin/idlc cmd/idlc/main.go
+go build -o bin/idlc ./cmd/idlc/
 
 # Generate Go code from an IDL file
-./bin/idlc -pkg mypkg my_interface.idl
+# Output: MyService_types.go, MyService_stub.go, MyService_skel.go
+./bin/idlc -pkg mypkg MyService.idl
 ```
 
+**Options:**
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-pkg` | lowercase IDL module name | Go package name for generated code |
+| `-out` | `.` | Output directory for generated files |
+
 ### 2. Running Services
+
 ```bash
 # Start Naming Service (listens on :2809)
 go run cmd/naming-service/main.go
@@ -64,6 +95,60 @@ go run cmd/naming-service/main.go
 go run cmd/event-service/main.go
 ```
 
+### 3. IOR Utility
+
+Use the `iop` package for creating and parsing IOR strings:
+
+```go
+import "github.com/sh0jitmy/corba-go/orb/iop"
+
+// Create an IOR
+ior := iop.NewIOR("IDL:MyModule/MyInterface:1.0", "localhost", 2809, []byte("MyObject"))
+iorStr := ior.StringifyIOR()
+
+// Parse an IOR string
+parsed, _ := iop.ParseIOR(iorStr)
+profile, _ := iop.ParseIIOPProfile(parsed.Profiles[0].ProfileData)
+fmt.Printf("Host: %s, Port: %d, ObjectKey: %s\n", profile.Host, profile.Port, string(profile.ObjectKey))
+```
+
+## Examples
+
+### Naming Service Test
+
+Demonstrates name registration and resolution via CosNaming:
+
+```bash
+# Terminal 1: Start the Naming Service
+./bin/naming-service
+
+# Terminal 2: Start a server that registers itself with the Naming Service
+cd examples/naming_test
+go run server_main.go test_types.go test_stub.go test_skel.go
+
+# Terminal 3: Resolve the name and invoke operations
+cd examples/naming_test/client
+go run client_main.go test_types.go test_stub.go test_skel.go
+```
+
+### Event Service Test
+
+Demonstrates push-model event broadcasting via CosEvent:
+
+```bash
+# Terminal 1: Start the Event Service
+./bin/event-service
+
+# Terminal 2: Register a consumer
+cd examples/event_test/consumer
+go run consumer_main.go
+
+# Terminal 3: Push events from a supplier
+cd examples/event_test/supplier
+go run supplier_main.go
+```
+
+The supplier pushes `cdr.Any` typed events through the EventChannel. The service broadcasts each event to all registered consumers.
+
 ## License
 This project is published under [Apache 2.0 License](LICENSE).
-
