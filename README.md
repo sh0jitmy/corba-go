@@ -6,7 +6,7 @@
 
 *Read this in other languages: [日本語 (Japanese)](README_ja.md)*
 
-A Native Go implementation of CORBA middleware. This project provides a basic but functional Object Request Broker (ORB) and an IDL compiler (`idlc`) built entirely in Go, enabling interoperability with legacy CORBA systems (e.g., omniORB, JacORB).
+A Native Go implementation of CORBA middleware. This project provides a basic but functional Object Request Broker (ORB) and an IDL compiler (`idlc`) built entirely in Go, aiming to achieve interoperability with conventional CORBA systems.
 
 ## Features
 - **IDL Compiler (`idlc`)**: Compiles OMG IDL into Go interfaces, client stubs, and server skeletons.
