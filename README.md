@@ -18,6 +18,7 @@ A Native Go implementation of CORBA middleware. This project provides a basic bu
   - IOR (Interoperable Object Reference) encoding/decoding utilities.
 - **Naming Service (`CosNaming`)**: In-memory name-to-IOR binding and resolution.
 - **Event Service (`CosEvent`)**: Push-model event channel for broadcasting messages between suppliers and consumers.
+- **REST-CORBA Gateway**: Dynamic JSON-to-CORBA proxy utilizing runtime IDL parsing (DII-like mechanism).
 
 ## Directory Structure
 
@@ -26,7 +27,8 @@ corba-go/
 ├── cmd/                          # Command-line entry points
 │   ├── idlc/                     # IDL compiler
 │   ├── naming-service/           # Standalone CosNaming service
-│   └── event-service/            # Standalone CosEvent service
+│   ├── event-service/            # Standalone CosEvent service
+│   └── rest-gateway/             # Dynamic REST-to-CORBA proxy gateway
 ├── orb/                          # Core ORB protocols
 │   ├── cdr/                      # CDR encoder/decoder + Any type
 │   ├── giop/                     # GIOP message handling
@@ -110,6 +112,33 @@ iorStr := ior.StringifyIOR()
 parsed, _ := iop.ParseIOR(iorStr)
 profile, _ := iop.ParseIIOPProfile(parsed.Profiles[0].ProfileData)
 fmt.Printf("Host: %s, Port: %d, ObjectKey: %s\n", profile.Host, profile.Port, string(profile.ObjectKey))
+```
+
+### 4. REST-CORBA Gateway
+
+A dynamic gateway that parses an IDL file at runtime and proxies JSON HTTP requests to CORBA IIOP calls without requiring pre-compiled stubs.
+
+```bash
+# Build the gateway
+go build -o bin/rest-gateway ./cmd/rest-gateway/
+
+# Run the gateway with a target IDL file
+./bin/rest-gateway -idl ./examples/basic_test/test.idl -port 8080
+```
+
+Send a JSON request to invoke a CORBA method:
+
+```bash
+curl -X POST http://localhost:8080/api/invoke \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_name": [
+      {"id": "Math", "kind": "Service"}
+    ],
+    "interface": "Math",
+    "method": "Add",
+    "args": [10, 20]
+  }'
 ```
 
 ## Examples
