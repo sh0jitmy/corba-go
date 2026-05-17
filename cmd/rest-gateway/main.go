@@ -1,3 +1,17 @@
+// Copyright 2026- The corba-go Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package main
 
 import (
@@ -9,6 +23,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/sh0jitmy/corba-go/idlc"
 	"github.com/sh0jitmy/corba-go/orb/cdr"
@@ -54,6 +69,7 @@ func main() {
 		log.Fatal("Please provide an IDL file using -idl <path>")
 	}
 
+	//nolint:gosec // user provides idl file path via command line flag
 	data, err := os.ReadFile(idlFile)
 	if err != nil {
 		log.Fatalf("Failed to read IDL file: %v", err)
@@ -70,7 +86,11 @@ func main() {
 
 	http.HandleFunc("/api/invoke", handleInvoke)
 	log.Printf("Starting REST-CORBA Gateway on :%d", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%d", port),
+		ReadHeaderTimeout: 3 * time.Second,
+	}
+	log.Fatal(server.ListenAndServe())
 }
 
 func findOperation(interfaceName, methodName string) (*idlc.OperationNode, error) {
@@ -118,15 +138,16 @@ func handleInvoke(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 2. ネーミングサービスへの接続 (本来はコネクションプーリング推奨)
+	//nolint:gosec // port is bounds checked via type or flag limits
 	client, err := iiop.NewClient(namingHost, uint16(namingPort))
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Failed to connect to naming service")
 		return
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	namingContext := naming.NewCosNaming_NamingContext_Stub(client, []byte("NameService"))
-	
+
 	var name naming.CosNaming_Name
 	for _, comp := range req.TargetName {
 		name = append(name, &naming.CosNaming_NameComponent{
@@ -159,7 +180,7 @@ func handleInvoke(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "Failed to connect to target server")
 		return
 	}
-	defer targetClient.Close()
+	defer func() { _ = targetClient.Close() }()
 
 	// 4. 動的エンコード (ASTのパラメータ型定義に従ってJSONの値をCDRに変換)
 	enc := cdr.NewEncoder(binary.LittleEndian)
@@ -186,13 +207,13 @@ func handleInvoke(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(InvokeResponse{Result: result})
+	_ = json.NewEncoder(w).Encode(InvokeResponse{Result: result})
 }
 
 func writeError(w http.ResponseWriter, code int, msg string) {
 	w.WriteHeader(code)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(InvokeResponse{Error: msg})
+	_ = json.NewEncoder(w).Encode(InvokeResponse{Error: msg})
 }
 
 // プリミティブ型の動的エンコード
