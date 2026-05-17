@@ -14,6 +14,7 @@ Go言語によるネイティブなCORBAミドルウェアの実装です。こ�
   - IOR（Interoperable Object Reference）のエンコード/デコードユーティリティ。
 - **ネーミングサービス (`CosNaming`)**: インメモリでの名前とIORのバインディング・名前解決。
 - **イベントサービス (`CosEvent`)**: サプライヤとコンシューマ間でメッセージをブロードキャストするPushモデルイベントチャネル。
+- **REST-CORBA ゲートウェイ**: 実行時にIDLを解釈し、JSONのHTTPリクエストを動的にCORBA(IIOP)通信へ変換するDIIプロキシ。
 
 ## ディレクトリ構成
 
@@ -22,7 +23,8 @@ corba-go/
 ├── cmd/                          # 各種実行バイナリのメインコード
 │   ├── idlc/                     # IDLコンパイラ
 │   ├── naming-service/           # ネーミングサービス
-│   └── event-service/            # イベントサービス
+│   ├── event-service/            # イベントサービス
+│   └── rest-gateway/             # 動的REST-CORBAプロキシサーバ
 ├── orb/                          # ORBプロトコルのコア機能
 │   ├── cdr/                      # CDRエンコーダ/デコーダ + Any型
 │   ├── giop/                     # GIOPメッセージ処理
@@ -106,6 +108,33 @@ iorStr := ior.StringifyIOR()
 parsed, _ := iop.ParseIOR(iorStr)
 profile, _ := iop.ParseIIOPProfile(parsed.Profiles[0].ProfileData)
 fmt.Printf("Host: %s, Port: %d, ObjectKey: %s\n", profile.Host, profile.Port, string(profile.ObjectKey))
+```
+
+### 4. REST-CORBAゲートウェイ
+
+実行時にIDLファイルをパースし、事前のスタブ生成なしでJSONからのHTTPリクエストをCORBA IIOP呼び出しに動的変換（DII相当）するゲートウェイです。
+
+```bash
+# ゲートウェイのビルド
+go build -o bin/rest-gateway ./cmd/rest-gateway/
+
+# 対象のIDLファイルを指定して起動
+./bin/rest-gateway -idl ./examples/basic_test/test.idl -port 8080
+```
+
+JSONを使ってREST API経由でCORBAのメソッドを呼び出します：
+
+```bash
+curl -X POST http://localhost:8080/api/invoke \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_name": [
+      {"id": "Math", "kind": "Service"}
+    ],
+    "interface": "Math",
+    "method": "Add",
+    "args": [10, 20]
+  }'
 ```
 
 ## サンプルコード
