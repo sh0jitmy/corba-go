@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.1.1](https://github.com/sh0jitmy/corba-go/compare/v0.1.0...v0.1.1) - 2026-06-06
+- Update go by @sh0jitmy in https://github.com/sh0jitmy/corba-go/pull/14
+
 ## [v0.1.0](https://github.com/sh0jitmy/corba-go/compare/v0.0.1...v0.1.0) - 2026-05-17
 - add rest gateway by @sh0jitmy in https://github.com/sh0jitmy/corba-go/pull/10
 - Bump golang.org/x/text from 0.36.0 to 0.37.0 by @dependabot[bot] in https://github.com/sh0jitmy/corba-go/pull/9
